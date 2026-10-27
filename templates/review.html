@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Attempt Review — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="result-wrapper">
+  <div class="section-head">
+    <div>
+      <a href="{{ url_for('history') }}" class="back-link">← Back to My Results</a>
+      <div class="eyebrow">HISTORICAL ATTEMPT REVIEW</div>
+      <h1>{{ attempt.quiz_title }}</h1>
+      <p class="muted">Taken on {{ attempt.taken_at }} • Score: <strong>{{ attempt.score }} / {{ attempt.total }}</strong> ({{ ((attempt.score / attempt.total) * 100)|round(1) if attempt.total else 0 }}%)</p>
+    </div>
+    <div>
+      <a class="button button-outline" href="{{ url_for('take_quiz', quiz_id=attempt.quiz_id) }}">
+        🔄 Retake Quiz
+      </a>
+    </div>
+  </div>
+
+  <div class="review-container">
+    <div class="review-list">
+      {% for q in answers %}
+        <div class="review-question-card {{ 'card-correct' if q.is_correct else 'card-incorrect' }}">
+          <div class="review-q-head">
+            <span class="qcount-pill">Question {{ loop.index }}</span>
+            {% if q.is_correct %}
+              <span class="review-status-pill status-pill-success">✓ Correct (+1 pt)</span>
+            {% elif not q.selected_option %}
+              <span class="review-status-pill status-pill-skipped">○ Skipped</span>
+            {% else %}
+              <span class="review-status-pill status-pill-danger">✕ Incorrect (0 pt)</span>
+            {% endif %}
+          </div>
+
+          <h3 class="review-q-text">{{ q.question }}</h3>
+
+          <div class="review-options-grid">
+            {% for opt_key in ['a', 'b', 'c', 'd'] %}
+              {% set opt_text = q[opt_key] %}
+              {% set is_user_pick = (q.selected_option and q.selected_option.lower() == opt_key) %}
+              {% set is_actual_correct = (q.correct.lower() == opt_key) %}
+
+              <div class="review-option-row
+                {% if is_user_pick and is_actual_correct %}review-opt-correct
+                {% elif is_user_pick and not is_actual_correct %}review-opt-wrong
+                {% elif is_actual_correct %}review-opt-actual
+                {% else %}review-opt-neutral{% endif %}">
+
+                <span class="opt-prefix">{{ opt_key|upper }}</span>
+                <span class="opt-body">{{ opt_text }}</span>
+
+                <span class="opt-indicator">
+                  {% if is_user_pick and is_actual_correct %}
+                    <span class="badge-opt-right">✓ Your Choice</span>
+                  {% elif is_user_pick and not is_actual_correct %}
+                    <span class="badge-opt-wrong">✕ Your Choice</span>
+                  {% elif is_actual_correct %}
+                    <span class="badge-opt-actual">★ Correct Answer</span>
+                  {% endif %}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+
+          {% if q.explanation %}
+            <div class="explanation-box">
+              <div class="explanation-title">
+                <span>💡 Concept Explanation:</span>
+              </div>
+              <p class="explanation-text">{{ q.explanation }}</p>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="review-bottom-actions">
+      <a class="button button-lg" href="{{ url_for('history') }}">
+        ← Return to Results History
+      </a>
+      <a class="button button-outline button-lg" href="{{ url_for('index') }}">
+        Explore Other Quizzes
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

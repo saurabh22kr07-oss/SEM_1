@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Results & Review — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="result-wrapper">
+  <div class="result-card">
+    {% set pct = ((score / total) * 100)|round(1) if total else 0 %}
+
+    <div class="result-icon">
+      {% if pct >= 80 %}🏆
+      {% elif pct >= 50 %}🎯
+      {% else %}💡
+      {% endif %}
+    </div>
+
+    <div class="eyebrow">CHALLENGE COMPLETED</div>
+    <h1 class="result-title">{{ quiz.title }}</h1>
+
+    <div class="grade-badge {% if pct >= 80 %}grade-success{% elif pct >= 50 %}grade-warning{% else %}grade-info{% endif %}">
+      {% if pct == 100 %}🌟 Perfect Score! Flawless Mastery!
+      {% elif pct >= 80 %}👏 Excellent Performance! Great Job!
+      {% elif pct >= 60 %}👍 Good Work! Well Done!
+      {% elif pct >= 40 %}📖 Fair Attempt! Practice will make it perfect!
+      {% else %}💪 Keep Learning! Review the explanations below.
+      {% endif %}
+    </div>
+
+    <div class="result-score-box">
+      <span class="score-number">{{ score }}</span>
+      <span class="score-divider">/</span>
+      <span class="score-total">{{ total }}</span>
+    </div>
+    <div class="score-percentage">{{ pct }}% Accuracy</div>
+
+    <div class="scorebar-container">
+      <div class="scorebar-track">
+        <div class="scorebar-fill" style="width: {{ pct }}%;"></div>
+      </div>
+    </div>
+
+    <!-- Attendance Context -->
+    <div class="result-attendees-chip">
+      <span>👥 You are student #{{ total_attendees }} to complete this quiz!</span>
+      {% if time_taken %}
+        <span class="time-taken-chip">⏱ Completed in {{ (time_taken // 60) }}m {{ (time_taken % 60) }}s</span>
+      {% endif %}
+    </div>
+
+    <div class="result-actions">
+      <a class="button button-lg" href="{{ url_for('index') }}">
+        Explore More Quizzes →
+      </a>
+      <a class="button button-outline button-lg" href="{{ url_for('history') }}">
+        View My Past Results
+      </a>
+      <a class="button button-ghost button-lg" href="{{ url_for('helpdesk') }}">
+        💬 Question Doubt? Ask Helpdesk
+      </a>
+    </div>
+  </div>
+
+  <!-- Detailed Question-by-Question Review with Explanations -->
+  <div class="review-container">
+    <div class="review-header">
+      <div>
+        <div class="eyebrow">LEARNING & MASTERY</div>
+        <h2>Detailed Answer Review</h2>
+        <p class="muted">Check which questions you answered correctly and read the verified concept explanations.</p>
+      </div>
+      <div class="review-legend">
+        <span class="legend-item legend-correct">✓ Correct Choice</span>
+        <span class="legend-item legend-wrong">✕ Your Incorrect Choice</span>
+        <span class="legend-item legend-actual">★ Correct Answer</span>
+      </div>
+    </div>
+
+    <div class="review-list">
+      {% for q in detailed_review %}
+        <div class="review-question-card {{ 'card-correct' if q.is_correct else 'card-incorrect' }}">
+          <div class="review-q-head">
+            <span class="qcount-pill">Question {{ loop.index }}</span>
+            {% if q.is_correct %}
+              <span class="review-status-pill status-pill-success">✓ Correct (+1 pt)</span>
+            {% elif not q.user_choice %}
+              <span class="review-status-pill status-pill-skipped">○ Skipped / Not Answered</span>
+            {% else %}
+              <span class="review-status-pill status-pill-danger">✕ Incorrect (0 pt)</span>
+            {% endif %}
+          </div>
+
+          <h3 class="review-q-text">{{ q.question }}</h3>
+
+          <div class="review-options-grid">
+            {% for opt_key in ['a', 'b', 'c', 'd'] %}
+              {% set opt_text = q[opt_key] %}
+              {% set is_user_pick = (q.user_choice and q.user_choice.lower() == opt_key) %}
+              {% set is_actual_correct = (q.correct.lower() == opt_key) %}
+
+              <div class="review-option-row
+                {% if is_user_pick and is_actual_correct %}review-opt-correct
+                {% elif is_user_pick and not is_actual_correct %}review-opt-wrong
+                {% elif is_actual_correct %}review-opt-actual
+                {% else %}review-opt-neutral{% endif %}">
+                
+                <span class="opt-prefix">{{ opt_key|upper }}</span>
+                <span class="opt-body">{{ opt_text }}</span>
+
+                <span class="opt-indicator">
+                  {% if is_user_pick and is_actual_correct %}
+                    <span class="badge-opt-right">✓ Your Correct Choice</span>
+                  {% elif is_user_pick and not is_actual_correct %}
+                    <span class="badge-opt-wrong">✕ Your Choice</span>
+                  {% elif is_actual_correct %}
+                    <span class="badge-opt-actual">★ Correct Answer</span>
+                  {% endif %}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+
+          {% if q.explanation %}
+            <div class="explanation-box">
+              <div class="explanation-title">
+                <span>💡 Concept Explanation:</span>
+              </div>
+              <p class="explanation-text">{{ q.explanation }}</p>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="review-bottom-actions">
+      <a class="button button-lg" href="{{ url_for('take_quiz', quiz_id=quiz.id) }}">
+        🔄 Retake This Quiz
+      </a>
+      <a class="button button-outline button-lg" href="{{ url_for('index') }}">
+        Back to All Quizzes
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

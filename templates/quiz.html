@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}{{ quiz.title }} — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="quiz-container">
+  <!-- Sticky Quiz Header with Real-Time Countdown Timer -->
+  <div class="quiz-sticky-header">
+    <div class="quiz-info-left">
+      <a href="{{ url_for('index') }}" class="back-link" title="Cancel and return">← Exit Quiz</a>
+      <h1 class="quiz-heading">{{ quiz.title }}</h1>
+    </div>
+
+    <div class="quiz-status-right">
+      <div class="answered-badge" id="answeredBadge">
+        Answered <strong id="answeredCount">0</strong> / {{ questions|length }}
+      </div>
+      <div class="timer-card" id="timerCard" role="timer" aria-live="polite">
+        <span class="timer-icon">⏱</span>
+        <span class="timer-label">Time Remaining:</span>
+        <span class="timer-digits" id="timerDigits">--:--</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="timer-progress-track">
+    <div class="timer-progress-bar" id="timerProgressBar" style="width: 100%;"></div>
+  </div>
+
+  <!-- Attention-Grabbing Student Attendance Banner ("Show student ki kiti janani pahile ti quiz attend keli aahe") -->
+  <div class="quiz-social-proof-banner">
+    <div class="social-proof-content">
+      <span class="social-proof-icon">👥</span>
+      <div>
+        <strong>{{ attendee_stats.student_count|default(0) }} students have already completed this quiz!</strong>
+        <span class="muted text-sm">({{ attendee_stats.attempt_count|default(0) }} total attempts submitted. Can you secure a top score on the leaderboard?)</span>
+      </div>
+    </div>
+    <div class="quiz-tags-right">
+      <span class="category-tag">{{ quiz.category|default('General') }}</span>
+      <span class="diff-tag diff-{{ quiz.difficulty|lower|default('medium') }}">{{ quiz.difficulty|default('Medium') }}</span>
+    </div>
+  </div>
+
+  <form id="quizForm" method="post" action="{{ url_for('take_quiz', quiz_id=quiz.id) }}" class="quiz-form">
+    <!-- Hidden input to track elapsed seconds -->
+    <input type="hidden" id="timeTakenInput" name="time_taken" value="0">
+
+    <div class="questions-list">
+      {% for q in questions %}
+        <fieldset class="question-card" id="questionCard-{{ q.id }}">
+          <legend class="sr-only">Question {{ loop.index }}</legend>
+          <div class="question-header">
+            <span class="qcount-badge">QUESTION {{ loop.index }} OF {{ questions|length }}</span>
+            <span class="answered-indicator" id="indicator-{{ q.id }}">Not answered</span>
+          </div>
+          <h2 class="question-title">{{ q.question }}</h2>
+
+          <div class="options-grid" role="radiogroup" aria-labelledby="questionTitle-{{ q.id }}">
+            {% for key in ['a', 'b', 'c', 'd'] %}
+              <label class="option-label" for="opt-{{ q.id }}-{{ key }}">
+                <input
+                  type="radio"
+                  id="opt-{{ q.id }}-{{ key }}"
+                  name="{{ q.id }}"
+                  value="{{ key }}"
+                  class="option-radio"
+                  data-qid="{{ q.id }}"
+                >
+                <span class="option-letter">{{ key|upper }}</span>
+                <span class="option-text">{{ q[key] }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+      {% endfor %}
+    </div>
+
+    <div class="quiz-submit-bar">
+      <div class="submit-notice muted">
+        Review your answers before submitting. Detailed explanations and score breakdown will be displayed immediately.
+      </div>
+      <button type="submit" id="submitBtn" class="button button-lg button-submit">
+        Submit Quiz & View Detailed Review →
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Modal overlay for time expiry -->
+<div id="timeUpModal" class="timeup-modal" style="display: none;" role="alertdialog" aria-modal="true">
+  <div class="timeup-card">
+    <div class="timeup-icon">⌛</div>
+    <h2>Time's Up!</h2>
+    <p>Your allocated time of {{ quiz.duration }} minutes has expired. Calculating and submitting your answers now...</p>
+    <div class="spinner"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function() {
+    const totalMinutes = {{ quiz.duration }};
+    let totalSeconds = totalMinutes * 60;
+    const initialSeconds = totalSeconds;
+    let elapsedSeconds = 0;
+    let timerInterval = null;
+
+    const timerCard = document.getElementById('timerCard');
+    const timerDigits = document.getElementById('timerDigits');
+    const timerProgressBar = document.getElementById('timerProgressBar');
+    const quizForm = document.getElementById('quizForm');
+    const answeredCountEl = document.getElementById('answeredCount');
+    const timeUpModal = document.getElementById('timeUpModal');
+    const submitBtn = document.getElementById('submitBtn');
+    const timeTakenInput = document.getElementById('timeTakenInput');
+
+    const totalQuestions = {{ questions|length }};
+    const radioInputs = document.querySelectorAll('.option-radio');
+
+    function updateAnsweredCount() {
+      const answeredQids = new Set();
+      radioInputs.forEach(r => {
+        if (r.checked) {
+          answeredQids.add(r.getAttribute('data-qid'));
+          const ind = document.getElementById('indicator-' + r.getAttribute('data-qid'));
+          if (ind) {
+            ind.textContent = '✓ Answered';
+            ind.classList.add('indicator-answered');
+          }
+        }
+      });
+      const count = answeredQids.size;
+      answeredCountEl.textContent = count;
+      return count;
+    }
+
+    radioInputs.forEach(r => {
+      r.addEventListener('change', updateAnsweredCount);
+    });
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function renderTimer() {
+      timerDigits.textContent = formatTime(totalSeconds);
+      const pct = (totalSeconds / initialSeconds) * 100;
+      timerProgressBar.style.width = pct + '%';
+
+      if (totalSeconds <= 60) {
+        timerCard.classList.add('timer-critical');
+        timerProgressBar.classList.add('bar-critical');
+      } else if (totalSeconds <= 180) {
+        timerCard.classList.add('timer-warning');
+        timerProgressBar.classList.add('bar-warning');
+      }
+    }
+
+    renderTimer();
+
+    timerInterval = setInterval(() => {
+      elapsedSeconds++;
+      timeTakenInput.value = elapsedSeconds;
+      totalSeconds--;
+
+      if (totalSeconds <= 0) {
+        clearInterval(timerInterval);
+        timerDigits.textContent = '00:00';
+        timerProgressBar.style.width = '0%';
+        timeUpModal.style.display = 'flex';
+        setTimeout(() => {
+          quizForm.submit();
+        }, 1200);
+        return;
+      }
+
+      renderTimer();
+    }, 1000);
+
+    quizForm.addEventListener('submit', function(e) {
+      timeTakenInput.value = elapsedSeconds;
+      const count = updateAnsweredCount();
+      if (count < totalQuestions) {
+        const remaining = totalQuestions - count;
+        const confirmSub = confirm(
+          `You still have ${remaining} unanswered question(s). Are you sure you want to submit now?`
+        );
+        if (!confirmSub) {
+          e.preventDefault();
+          return false;
+        }
+      }
+      clearInterval(timerInterval);
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting your answers...';
+    });
+  })();
+</script>
+{% endblock %}

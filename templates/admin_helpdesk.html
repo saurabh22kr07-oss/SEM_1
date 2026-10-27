@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Helpdesk Management — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+  <div class="section-head admin-header">
+    <div>
+      <div class="eyebrow">ADMINISTRATOR DESK</div>
+      <h1>Student Helpdesk & Queries</h1>
+      <p class="muted">Review incoming questions from students, provide official responses, and manage ticket resolution status.</p>
+    </div>
+    <div class="admin-actions">
+      <a class="button button-outline" href="{{ url_for('admin') }}">← Dashboard</a>
+      <a class="button" href="{{ url_for('new_quiz') }}">＋ Create New Quiz</a>
+    </div>
+  </div>
+
+  <!-- Metric Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-label">Pending / Open Tickets</span>
+      <strong class="stat-value color-warning">{{ open_count }}</strong>
+      <span class="stat-sub">Needs response</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Resolved Tickets</span>
+      <strong class="stat-value color-success">{{ resolved_count }}</strong>
+      <span class="stat-sub">Successfully answered</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Total Support Inquiries</span>
+      <strong class="stat-value">{{ total_count }}</strong>
+      <span class="stat-sub">All-time tickets</span>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-tabs">
+      <a href="{{ url_for('admin_helpdesk') }}" class="filter-tab {{ 'active' if not current_filter else '' }}">
+        All Tickets ({{ total_count }})
+      </a>
+      <a href="{{ url_for('admin_helpdesk', status='Open') }}" class="filter-tab {{ 'active' if current_filter == 'Open' else '' }}">
+        ⏳ Open ({{ open_count }})
+      </a>
+      <a href="{{ url_for('admin_helpdesk', status='Resolved') }}" class="filter-tab {{ 'active' if current_filter == 'Resolved' else '' }}">
+        ✓ Resolved ({{ resolved_count }})
+      </a>
+    </div>
+  </div>
+
+  <!-- Tickets List -->
+  <div class="admin-section">
+    {% if tickets %}
+      <div class="tickets-admin-stack">
+        {% for t in tickets %}
+          <div class="admin-ticket-card ticket-status-{{ t.status|lower|replace(' ', '-') }}">
+            <div class="admin-ticket-header">
+              <div class="ticket-header-left">
+                <span class="ticket-id">#TICK-{{ t.id }}</span>
+                <span class="ticket-cat-badge">{{ t.category }}</span>
+                <span class="ticket-student-info">
+                  <strong>{{ t.name }}</strong> ({{ t.email }})
+                </span>
+              </div>
+              <div class="ticket-header-right">
+                <span class="ticket-status-pill status-pill-{{ t.status|lower|replace(' ', '-') }}">
+                  {{ t.status }}
+                </span>
+                <span class="muted ticket-date">📅 {{ t.created_at }}</span>
+              </div>
+            </div>
+
+            <div class="admin-ticket-body">
+              <h3 class="admin-ticket-subject">{{ t.subject }}</h3>
+              <p class="admin-ticket-msg">{{ t.message }}</p>
+            </div>
+
+            {% if t.admin_reply %}
+              <div class="existing-reply-box">
+                <div class="existing-reply-header">
+                  <strong>✓ Your Previous Reply:</strong>
+                  <span class="muted text-sm">Replied at {{ t.replied_at }}</span>
+                </div>
+                <p>{{ t.admin_reply }}</p>
+              </div>
+            {% endif %}
+
+            <!-- Reply / Update Action Box -->
+            <div class="admin-ticket-reply-form">
+              <form method="post" action="{{ url_for('reply_ticket', ticket_id=t.id) }}">
+                <div class="form-group">
+                  <label class="form-label text-sm" for="reply-{{ t.id }}">
+                    {{ 'Update Response:' if t.admin_reply else 'Write Official Response to Student:' }}
+                  </label>
+                  <textarea
+                    id="reply-{{ t.id }}"
+                    name="reply"
+                    class="form-input form-textarea text-sm"
+                    rows="2"
+                    placeholder="Type helpful explanation or resolution for the student..."
+                    required
+                  >{{ t.admin_reply if t.admin_reply else '' }}</textarea>
+                </div>
+                <div class="reply-actions-row">
+                  <div class="status-select-wrap">
+                    <label class="form-label text-sm" for="status-{{ t.id }}">Status:</label>
+                    <select name="status" id="status-{{ t.id }}" class="form-input form-input-sm">
+                      <option value="Resolved" {% if t.status == 'Resolved' %}selected{% endif %}>Mark as Resolved</option>
+                      <option value="In Progress" {% if t.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                      <option value="Open" {% if t.status == 'Open' %}selected{% endif %}>Keep Open</option>
+                    </select>
+                  </div>
+                  <div class="btn-group-right">
+                    <button type="submit" class="button button-sm">
+                      Send Response →
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              <form method="post" action="{{ url_for('delete_ticket', ticket_id=t.id) }}" onsubmit="return confirm('Delete this ticket?')" class="delete-ticket-form">
+                <button type="submit" class="button button-sm button-ghost-danger">🗑 Delete</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🎉</div>
+        <h3>No tickets match this filter</h3>
+        <p class="muted">All student inquiries have been addressed or no tickets are currently open.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

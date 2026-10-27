@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Quiz' if quiz else 'Create New Quiz' }} — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper form-wrapper-wide">
+  <div class="auth-card form-card">
+    <div class="auth-header">
+      <div class="eyebrow">QUIZ BUILDER</div>
+      <h1 class="auth-title">{{ 'Edit Quiz Details' if quiz else 'Create a New Quiz' }}</h1>
+      <p class="muted">Configure title, category, difficulty level, and timer duration for your quiz.</p>
+    </div>
+
+    <form method="post" action="{{ url_for('edit_quiz', quiz_id=quiz.id) if quiz else url_for('new_quiz') }}" class="auth-form">
+      <div class="form-group">
+        <label for="title" class="form-label">Quiz Title *</label>
+        <input
+          id="title"
+          type="text"
+          name="title"
+          class="form-input"
+          value="{{ quiz.title if quiz else '' }}"
+          required
+          autofocus
+          placeholder="e.g. Python Fundamentals & OOP"
+        >
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label for="category" class="form-label">Category / Subject *</label>
+          <select id="category" name="category" class="form-input" required>
+            <option value="Programming" {% if quiz and quiz.category == 'Programming' %}selected{% endif %}>Programming</option>
+            <option value="Web Dev" {% if quiz and quiz.category == 'Web Dev' %}selected{% endif %}>Web Development</option>
+            <option value="Science & Tech" {% if quiz and quiz.category == 'Science & Tech' %}selected{% endif %}>Science & Tech</option>
+            <option value="AI & Data" {% if quiz and quiz.category == 'AI & Data' %}selected{% endif %}>AI & Data Science</option>
+            <option value="General" {% if quiz and quiz.category == 'General' %}selected{% endif %}>General Knowledge</option>
+          </select>
+        </div>
+
+        <div class="form-group flex-1">
+          <label for="difficulty" class="form-label">Difficulty Level *</label>
+          <select id="difficulty" name="difficulty" class="form-input" required>
+            <option value="Easy" {% if quiz and quiz.difficulty == 'Easy' %}selected{% endif %}>Easy</option>
+            <option value="Medium" {% if quiz and quiz.difficulty == 'Medium' %}selected{% endif %}>Medium</option>
+            <option value="Hard" {% if quiz and quiz.difficulty == 'Hard' %}selected{% endif %}>Hard</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description" class="form-label">Description <span class="muted font-normal">(optional)</span></label>
+        <textarea
+          id="description"
+          name="description"
+          class="form-input form-textarea"
+          rows="3"
+          placeholder="What key topics and concepts will this quiz cover?"
+        >{{ quiz.description if quiz else '' }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="duration" class="form-label">Time Limit (in minutes) *</label>
+        <input
+          id="duration"
+          type="number"
+          name="duration"
+          class="form-input"
+          min="1"
+          max="180"
+          value="{{ quiz.duration if quiz else 10 }}"
+          required
+        >
+        <span class="field-hint muted text-xs">Students will have a live countdown timer during the test.</span>
+      </div>
+
+      <div class="checkbox-group">
+        <label class="custom-checkbox">
+          <input type="checkbox" name="published" {% if not quiz or quiz.published %}checked{% endif %}>
+          <span class="checkbox-box"></span>
+          <span class="checkbox-text">Publish immediately (visible to students)</span>
+        </label>
+      </div>
+
+      <div class="form-actions-split">
+        <button type="submit" class="button button-lg">
+          {{ 'Save Quiz Changes →' if quiz else 'Continue to Add Questions →' }}
+        </button>
+        <a href="{{ url_for('admin') }}" class="button button-outline button-lg">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

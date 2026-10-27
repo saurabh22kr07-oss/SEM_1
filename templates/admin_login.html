@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Portal Sign In — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-card admin-auth-card">
+    <div class="auth-portal-badge admin-badge">
+      <span>🛡️ ADMINISTRATOR CONTROL PORTAL</span>
+    </div>
+
+    <h1 class="auth-title">Admin Management Sign In</h1>
+    <p class="auth-desc">Restricted access for instructors and platform administrators to manage quizzes, view student submissions, and resolve helpdesk queries.</p>
+
+    <form method="post" action="{{ url_for('admin_login') }}" class="auth-form" novalidate>
+      <div class="form-group">
+        <label for="email" class="form-label">Administrator Email</label>
+        <div class="input-wrap">
+          <input
+            type="email"
+            id="email"
+            name="email"
+            class="form-input"
+            placeholder="admin@quizzy.com"
+            required
+            autofocus
+          >
+          <span class="input-icon">🛡️</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Admin Security Key / Password</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-input"
+            placeholder="••••••••••••"
+            required
+          >
+          <span class="input-icon">🔒</span>
+        </div>
+      </div>
+
+      <button type="submit" class="button button-admin button-full button-lg">
+        Sign In to Admin Dashboard →
+      </button>
+    </form>
+
+    <!-- Quick Demo Admin Helper -->
+    <div class="demo-helper-box demo-helper-admin">
+      <div class="demo-helper-title">🔑 Administrator Demo Credentials:</div>
+      <div class="demo-credentials">
+        <code>admin@quizzy.com</code> | <code>Admin@123</code>
+      </div>
+      <button type="button" class="btn-demo-fill btn-demo-fill-admin" onclick="fillAdminDemo()">Autofill Admin Demo</button>
+    </div>
+
+    <!-- Portal Switch Notice -->
+    <div class="portal-switch-box">
+      <span>Are you a student taking a quiz?</span>
+      <a href="{{ url_for('login') }}" class="portal-switch-link">
+        🎓 Go to Student Portal →
+      </a>
+    </div>
+
+    <div class="auth-security-notice">
+      🔒 All administrator actions and access attempts are encrypted and logged for security.
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function fillAdminDemo() {
+    document.getElementById('email').value = 'admin@quizzy.com';
+    document.getElementById('password').value = 'Admin@123';
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Student Sign In — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-card student-auth-card">
+    <div class="auth-portal-badge student-badge">
+      <span>🎓 STUDENT ACCESS PORTAL</span>
+    </div>
+
+    <h1 class="auth-title">Welcome Back, Student!</h1>
+    <p class="auth-desc">Sign in with your registered email or 10-digit mobile number to take quizzes, review attempts, and climb the leaderboard.</p>
+
+    <form method="post" action="{{ url_for('login') }}" class="auth-form" novalidate>
+      <div class="form-group">
+        <label for="identifier" class="form-label">Email Address or Mobile Number</label>
+        <div class="input-wrap">
+          <input
+            type="text"
+            id="identifier"
+            name="identifier"
+            class="form-input"
+            placeholder="e.g. student@quizzy.com or 9876543210"
+            required
+            autofocus
+          >
+          <span class="input-icon">👤</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-input"
+            placeholder="Enter your password"
+            required
+          >
+          <span class="input-icon">🔒</span>
+        </div>
+      </div>
+
+      <button type="submit" class="button button-full button-lg">
+        Log In to Student Portal →
+      </button>
+    </form>
+
+    <!-- Quick Demo Student Helper -->
+    <div class="demo-helper-box">
+      <div class="demo-helper-title">⚡ Quick Demo Student Account:</div>
+      <div class="demo-credentials">
+        <code>student@quizzy.com</code> | <code>Student@123</code>
+      </div>
+      <button type="button" class="btn-demo-fill" onclick="fillStudentDemo()">Autofill Student Demo</button>
+    </div>
+
+    <!-- Portal Switch Notice -->
+    <div class="portal-switch-box">
+      <span>Are you an administrator or teacher?</span>
+      <a href="{{ url_for('admin_login') }}" class="portal-switch-link">
+        🛡️ Go to Admin Portal →
+      </a>
+    </div>
+
+    <div class="auth-footer">
+      Don't have an account yet? <a href="{{ url_for('register') }}">Create Student Account</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function fillStudentDemo() {
+    document.getElementById('identifier').value = 'student@quizzy.com';
+    document.getElementById('password').value = 'Student@123';
+  }
+</script>
+{% endblock %}

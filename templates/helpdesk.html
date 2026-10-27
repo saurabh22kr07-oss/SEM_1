@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Helpdesk & Student Support — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="helpdesk-page">
+  <!-- Page Header -->
+  <div class="section-head helpdesk-hero">
+    <div>
+      <div class="eyebrow">SUPPORT & QUERIES</div>
+      <h1>Student Helpdesk Center</h1>
+      <p class="muted">Have questions about a quiz question, scores, account issues, or suggestions? Submit a ticket and our instructors will help you.</p>
+    </div>
+    <div class="helpdesk-badge-pill">
+      <span>⚡ Fast Response Guarantee</span>
+    </div>
+  </div>
+
+  <div class="helpdesk-grid">
+    <!-- Ticket Submission Form -->
+    <div class="card helpdesk-form-card">
+      <div class="card-header-styled">
+        <span class="card-icon-styled">📝</span>
+        <div>
+          <h2>Submit a Support Request</h2>
+          <p class="card-subtitle muted">Fill in the details below to raise a new query.</p>
+        </div>
+      </div>
+
+      <form method="post" action="{{ url_for('helpdesk') }}" class="helpdesk-form">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="name" class="form-label">Full Name *</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              class="form-input"
+              placeholder="Your name"
+              value="{{ current_user.name if current_user else '' }}"
+              required
+            >
+          </div>
+          <div class="form-group flex-1">
+            <label for="email" class="form-label">Email Address *</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-input"
+              placeholder="you@example.com"
+              value="{{ current_user.email if current_user else '' }}"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="category" class="form-label">Query Category *</label>
+          <select id="category" name="category" class="form-input" required>
+            <option value="Quiz Issue">🧠 Quiz Content / Question Clarification</option>
+            <option value="Grading & Scores">📊 Scores & Leaderboard Query</option>
+            <option value="Account & Login">🔐 Account & Login Help</option>
+            <option value="Feature Suggestion">💡 Feature or Quiz Request</option>
+            <option value="Other">💬 Other Support</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="subject" class="form-label">Subject *</label>
+          <input
+            type="text"
+            id="subject"
+            name="subject"
+            class="form-input"
+            placeholder="Brief summary of your inquiry"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="message" class="form-label">Message Details *</label>
+          <textarea
+            id="message"
+            name="message"
+            class="form-input form-textarea"
+            rows="5"
+            placeholder="Please describe your question or issue in detail..."
+            required
+          ></textarea>
+        </div>
+
+        <button type="submit" class="button button-lg button-full">
+          Submit Helpdesk Ticket →
+        </button>
+      </form>
+    </div>
+
+    <!-- Quick Help & FAQs Info Card -->
+    <div class="helpdesk-sidebar">
+      <div class="card helpdesk-info-card">
+        <h3>💡 Frequently Asked Questions</h3>
+        <div class="faq-list">
+          <div class="faq-item">
+            <strong>How are quiz scores calculated?</strong>
+            <p class="muted">Each correct question awards 1 point. There is currently no negative marking, so give every question a try!</p>
+          </div>
+          <div class="faq-item">
+            <strong>Can I retake a quiz?</strong>
+            <p class="muted">Yes! You can retake any quiz at any time. All attempts are saved in your personalized Results History.</p>
+          </div>
+          <div class="faq-item">
+            <strong>What happens if the timer runs out?</strong>
+            <p class="muted">Your quiz will be automatically submitted with whatever answers you have selected so far.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card helpdesk-contact-card">
+        <div class="contact-pill">🛡️ Dedicated Support</div>
+        <h4>Need Instructor Assistance?</h4>
+        <p class="muted">Our admin team monitors all incoming tickets. Typical response time is within a few hours.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- User's Existing Support Tickets (If logged in or submitted) -->
+  {% if current_user %}
+    <div class="my-tickets-section">
+      <div class="section-subhead">
+        <div>
+          <h2>Your Support Tickets</h2>
+          <p class="muted">Track the progress of your queries and view replies from administrators.</p>
+        </div>
+        <span class="count-badge">{{ my_tickets|length }} tickets</span>
+      </div>
+
+      {% if my_tickets %}
+        <div class="tickets-stack">
+          {% for t in my_tickets %}
+            <div class="ticket-card ticket-status-{{ t.status|lower|replace(' ', '-') }}">
+              <div class="ticket-top">
+                <div class="ticket-meta-left">
+                  <span class="ticket-id">#TICK-{{ t.id }}</span>
+                  <span class="ticket-cat-badge">{{ t.category }}</span>
+                  <span class="ticket-date muted">📅 {{ t.created_at }}</span>
+                </div>
+                <div class="ticket-status-pill status-pill-{{ t.status|lower|replace(' ', '-') }}">
+                  {% if t.status == 'Resolved' %}✓ Resolved
+                  {% elif t.status == 'In Progress' %}⚙ In Progress
+                  {% else %}⏳ Open
+                  {% endif %}
+                </div>
+              </div>
+
+              <h3 class="ticket-subject">{{ t.subject }}</h3>
+              <p class="ticket-message">{{ t.message }}</p>
+
+              {% if t.admin_reply %}
+                <div class="admin-reply-box">
+                  <div class="reply-header">
+                    <span class="reply-badge">🛡️ Administrator Reply</span>
+                    <span class="reply-time muted">{{ t.replied_at }}</span>
+                  </div>
+                  <p class="reply-content">{{ t.admin_reply }}</p>
+                </div>
+              {% else %}
+                <div class="reply-pending-notice muted">
+                  ⏳ Awaiting instructor review. You will see the response here once reviewed.
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📨</div>
+          <h3>No support tickets yet</h3>
+          <p class="muted">If you have any doubt, fill out the form above to reach our instructors.</p>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

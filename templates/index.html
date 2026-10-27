@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Quizzy Pro — Learn, Challenge & Level Up{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <div class="eyebrow">THE SMARTER WAY TO PRACTICE & TEST KNOWLEDGE</div>
+    <h1 class="hero-title">Master Concepts.<br><span class="gradient-text">Measure Real Progress.</span></h1>
+    <p class="hero-desc">Interactive timed quizzes with real-time countdowns, live attendee analytics, personalized attempt reviews, and a dedicated student helpdesk.</p>
+    <div class="hero-actions">
+      <a class="button button-lg" href="#quizzes">Explore Quizzes →</a>
+      {% if not current_user %}
+        <a class="button button-outline button-lg" href="{{ url_for('register') }}">Create Free Account</a>
+      {% else %}
+        <a class="button button-outline button-lg" href="{{ url_for('history') }}">View My Results</a>
+      {% endif %}
+    </div>
+
+    <!-- Live Platform Telemetry Metric Badges -->
+    <div class="hero-stats-row">
+      <div class="hero-stat-item">
+        <strong>{{ platform_stats.quizzes }}</strong>
+        <span>Live Quizzes</span>
+      </div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat-item">
+        <strong>{{ platform_stats.students }}</strong>
+        <span>Active Learners</span>
+      </div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat-item">
+        <strong>{{ platform_stats.attempts }}</strong>
+        <span>Completed Attempts</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-art" aria-hidden="true">
+    <div class="glow-orb"></div>
+    <div class="quiz-card-preview">
+      <div class="preview-badge">FEATURED CHALLENGE</div>
+      <div class="preview-score">Q<span>+</span></div>
+      <strong class="preview-heading">Python & Web<br>Development</strong>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 80%;"></div>
+      </div>
+      <div class="preview-meta">
+        <span>👥 Verified Attendance</span>
+        <span>⚡ Instant Review</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quizzes" class="quizzes-section">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">CHOOSE YOUR TEST</div>
+      <h2>Available Quizzes</h2>
+      <p class="muted">Check how many students have already completed each test and see how you rank.</p>
+    </div>
+    <span class="count-badge">{{ quizzes|length }} {{ 'quiz' if quizzes|length == 1 else 'quizzes' }}</span>
+  </div>
+
+  <!-- Search & Category Filters -->
+  <div class="catalog-controls">
+    <div class="category-pills">
+      <a href="{{ url_for('index', q=search_query) }}" class="cat-pill {{ 'active' if not selected_category or selected_category == 'All' else '' }}">
+        All Topics
+      </a>
+      {% for cat in categories %}
+        <a href="{{ url_for('index', category=cat, q=search_query) }}" class="cat-pill {{ 'active' if selected_category == cat else '' }}">
+          {{ cat }}
+        </a>
+      {% endfor %}
+    </div>
+
+    <form method="get" action="{{ url_for('index') }}" class="search-form">
+      {% if selected_category %}
+        <input type="hidden" name="category" value="{{ selected_category }}">
+      {% endif %}
+      <div class="search-wrap">
+        <input
+          type="text"
+          name="q"
+          class="form-input search-input"
+          placeholder="Search quiz topic..."
+          value="{{ search_query }}"
+        >
+        <button type="submit" class="search-btn">🔍</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Quizzes Grid -->
+  <div class="cards-grid">
+    {% for q in quizzes %}
+      <article class="quiz-card">
+        <div class="card-top">
+          <div class="card-badges-left">
+            <span class="category-tag">{{ q.category|default('General') }}</span>
+            <span class="diff-tag diff-{{ q.difficulty|lower|default('medium') }}">{{ q.difficulty|default('Medium') }}</span>
+          </div>
+          <span class="timer-tag">⏱ {{ q.duration }}m</span>
+        </div>
+
+        <h3 class="card-title">{{ q.title }}</h3>
+        <p class="card-desc">{{ q.description if q.description else 'Test your core concepts and measure your progress.' }}</p>
+
+        <!-- Live Attendance Tracker (Highlighting how many students have attended!) -->
+        <div class="attendance-banner">
+          <span class="attendance-icon">👥</span>
+          <span class="attendance-text">
+            <strong>{{ q.student_count }} students attended</strong>
+            <span class="muted text-xs">({{ q.attempt_count }} total attempts)</span>
+          </span>
+        </div>
+
+        <div class="card-meta">
+          <span>▤ {{ q.question_count }} questions</span>
+          <span>⚡ Instant scoring</span>
+        </div>
+
+        <div class="card-action">
+          <a class="button button-full" href="{{ url_for('take_quiz', quiz_id=q.id) }}">
+            Start Quiz Challenge →
+          </a>
+        </div>
+      </article>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <h3>No published quizzes match your criteria</h3>
+        <p class="muted">Try selecting a different category or clearing your search filter.</p>
+        <a href="{{ url_for('index') }}" class="button button-outline" style="margin-top: 14px;">Reset Filters</a>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Leaderboard / Hall of Fame -->
+<section class="leaderboard-section">
+  <div class="leaderboard-card">
+    <div class="leaderboard-header">
+      <div class="eyebrow">HALL OF FAME</div>
+      <h2>Top Performing Students</h2>
+      <p class="muted">Highest scores achieved across all quizzes on Quizzy Pro.</p>
+    </div>
+
+    <div class="leaderboard-list">
+      {% for l in leaders %}
+        <div class="leader-row {{ 'top-rank' if loop.index == 1 else '' }}">
+          <div class="rank-badge rank-{{ loop.index }}">
+            {% if loop.index == 1 %}🥇
+            {% elif loop.index == 2 %}🥈
+            {% elif loop.index == 3 %}🥉
+            {% else %}#{{ loop.index }}
+            {% endif %}
+          </div>
+          <div class="leader-info">
+            <span class="leader-name">{{ l.name }}</span>
+            <span class="leader-sub">{{ l.tests_taken }} {{ 'test' if l.tests_taken == 1 else 'tests' }} completed</span>
+          </div>
+          <div class="leader-score">
+            <strong>{{ l.best }}</strong>
+            <span class="muted">/ {{ l.total }} pts</span>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p class="muted">Leaderboard will update after students complete quizzes.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,5 +1,36 @@
-.venv/
+# Python
 __pycache__/
 *.py[cod]
-*.db
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Database temporary files
+*.db-shm
+*.db-wal
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Secrets
 .env
+
+# Internal tooling & agent metadata
+.agent/
+.agents/
+.gemini/
+.gsd/
+GSD-STYLE.md
+PROJECT_RULES.md
+VERSION
+adapters/
+model_capabilities.yaml
+scripts/
