@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="eyebrow">GET STARTED FREE</div>
+      <h1 class="auth-title">Create your account</h1>
+      <p class="muted">Register with your email or Indian mobile number. Quick setup with no OTP delay.</p>
+    </div>
+
+    <form method="post" action="{{ url_for('register') }}" class="auth-form" id="registerForm">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input
+          id="name"
+          type="text"
+          name="name"
+          required
+          autocomplete="name"
+          placeholder="e.g. Rahul Sharma"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email address <span class="muted font-normal">(optional if mobile provided)</span></label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          autocomplete="email"
+          placeholder="you@example.com"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="mobile">Mobile Number <span class="muted font-normal">(optional if email provided)</span></label>
+        <input
+          id="mobile"
+          type="tel"
+          name="mobile"
+          inputmode="numeric"
+          pattern="[6-9][0-9]{9}"
+          maxlength="10"
+          autocomplete="tel"
+          placeholder="10-digit mobile number"
+        >
+        <span class="field-hint">Indian 10-digit mobile number starting with 6, 7, 8, or 9.</span>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          name="password"
+          minlength="6"
+          required
+          autocomplete="new-password"
+          placeholder="At least 6 characters"
+        >
+      </div>
+
+      <button type="submit" class="button button-lg button-full">
+        Create Account →
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Questions: {{ quiz.title }} — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper form-wrapper-wide">
+  <div class="auth-card form-card">
+    <div class="auth-header">
+      <a href="{{ url_for('admin') }}" class="back-link">← Back to Admin Dashboard</a>
+      <div class="eyebrow">QUESTION BUILDER</div>
+      <h1 class="auth-title">Author Questions</h1>
+      <p class="muted">Quiz: <strong>{{ quiz.title }}</strong> ({{ quiz.duration }} min limit) • Currently has <strong>{{ questions|length }} questions</strong>.</p>
+    </div>
+
+    <!-- Question Form -->
+    <form method="post" action="{{ url_for('add_question', quiz_id=quiz.id) }}" class="auth-form">
+      <div class="form-group">
+        <label for="question" class="form-label">Question Text *</label>
+        <textarea
+          id="question"
+          name="question"
+          class="form-input form-textarea"
+          required
+          rows="3"
+          autofocus
+          placeholder="e.g. Which keyword is used to declare a function in Python?"
+        ></textarea>
+      </div>
+
+      <div class="options-input-grid">
+        {% for k in ['a', 'b', 'c', 'd'] %}
+          <div class="form-group">
+            <label for="opt-{{ k }}" class="form-label">Option {{ k|upper }} *</label>
+            <input
+              id="opt-{{ k }}"
+              type="text"
+              name="{{ k }}"
+              class="form-input"
+              required
+              placeholder="Enter choice {{ k|upper }}"
+            >
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label for="correct" class="form-label">Correct Answer *</label>
+          <select id="correct" name="correct" class="form-input" required>
+            <option value="" disabled selected>Select the correct answer option</option>
+            <option value="a">Option A</option>
+            <option value="b">Option B</option>
+            <option value="c">Option C</option>
+            <option value="d">Option D</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="explanation" class="form-label">Concept Explanation <span class="muted font-normal">(shown to students on result review)</span></label>
+        <textarea
+          id="explanation"
+          name="explanation"
+          class="form-input form-textarea"
+          rows="2"
+          placeholder="Explain why this option is correct and clarify the core rule or logic..."
+        ></textarea>
+      </div>
+
+      <div class="form-actions-split">
+        <button type="submit" class="button button-lg">
+          ＋ Save Question & Add Another
+        </button>
+        <a href="{{ url_for('admin') }}" class="button button-outline button-lg">
+          Done / Back to Admin
+        </a>
+      </div>
+    </form>
+
+    <!-- Existing Questions in this Quiz -->
+    {% if questions %}
+      <div class="existing-questions-section">
+        <div class="existing-q-head">
+          <h3>Existing Questions ({{ questions|length }})</h3>
+          <span class="muted text-sm">Review or remove questions from this quiz.</span>
+        </div>
+
+        <div class="existing-q-list">
+          {% for q in questions %}
+            <div class="existing-q-item">
+              <div class="existing-q-info">
+                <span class="q-num">Q{{ loop.index }}.</span>
+                <span class="q-text"><strong>{{ q.question }}</strong></span>
+                <span class="q-correct-badge">Correct: {{ q.correct|upper }}</span>
+                {% if q.explanation %}
+                  <div class="q-expl-preview muted text-xs">💡 {{ q.explanation }}</div>
+                {% endif %}
+              </div>
+              <form method="post" action="{{ url_for('delete_question', question_id=q.id) }}" onsubmit="return confirm('Delete this question?');">
+                <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+                <button type="submit" class="button button-sm button-ghost-danger">🗑 Delete</button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

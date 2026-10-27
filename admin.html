@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+  <div class="section-head admin-header">
+    <div>
+      <div class="eyebrow">CONTROL CENTER</div>
+      <h1>Admin Dashboard</h1>
+      <p class="muted">Manage quiz library, author questions, monitor student attendee analytics, and export performance reports.</p>
+    </div>
+    <div class="admin-actions">
+      <a class="button button-outline" href="{{ url_for('admin_helpdesk') }}">
+        💬 Helpdesk
+        {% if admin_open_tickets > 0 %}
+          <span class="badge-count">{{ admin_open_tickets }}</span>
+        {% endif %}
+      </a>
+      <a class="button button-outline" href="{{ url_for('export_results_csv') }}" title="Download all student scores in CSV format">
+        📥 Export CSV
+      </a>
+      {% if results_only|default(false) %}
+        <a class="button button-outline" href="{{ url_for('admin') }}">← Full Dashboard</a>
+      {% else %}
+        <a class="button button-outline" href="{{ url_for('admin_results') }}">📊 All Results ({{ attempt_count }})</a>
+      {% endif %}
+      <a class="button" href="{{ url_for('new_quiz') }}">＋ Create New Quiz</a>
+    </div>
+  </div>
+
+  {% if not results_only|default(false) %}
+    <!-- High-level Metric Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">Registered Students</span>
+        <strong class="stat-value">{{ student_count }}</strong>
+        <span class="stat-sub">Active learners</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total Quiz Attempts</span>
+        <strong class="stat-value">{{ attempt_count }}</strong>
+        <span class="stat-sub">Completed tests</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total Quizzes</span>
+        <strong class="stat-value">{{ quizzes|length }}</strong>
+        <span class="stat-sub">In library</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Helpdesk Inquiries</span>
+        <strong class="stat-value {{ 'color-warning' if admin_open_tickets > 0 else 'color-success' }}">
+          {{ admin_open_tickets }} Pending
+        </strong>
+        <a href="{{ url_for('admin_helpdesk') }}" class="stat-sub link-sub">Review tickets →</a>
+      </div>
+    </div>
+
+    <!-- Quizzes Table -->
+    <div class="admin-section">
+      <div class="section-subhead">
+        <div>
+          <h2>Quiz Library & Attendance Overview</h2>
+          <p class="muted">Live overview of test durations, questions, and total student attendee counts.</p>
+        </div>
+        <span class="count-badge">{{ quizzes|length }} quizzes</span>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Quiz Title & Category</th>
+              <th>Duration</th>
+              <th>Questions</th>
+              <th>Students Attended</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for q in quizzes %}
+              <tr>
+                <td>
+                  <strong class="row-title">{{ q.title }}</strong>
+                  <div class="row-sub-tags">
+                    <span class="category-tag text-xs">{{ q.category|default('General') }}</span>
+                    <span class="diff-tag diff-{{ q.difficulty|lower|default('medium') }} text-xs">{{ q.difficulty|default('Medium') }}</span>
+                  </div>
+                  <div class="row-sub muted">{{ q.description[:65] ~ ('...' if q.description|length > 65 else '') }}</div>
+                </td>
+                <td>{{ q.duration }} min</td>
+                <td>
+                  <span class="qcount-pill">{{ q.question_count }} questions</span>
+                </td>
+                <td>
+                  <div class="attendee-stat-cell">
+                    <strong>👥 {{ q.student_count }} students</strong>
+                    <span class="muted text-xs">({{ q.attempt_count }} total attempts)</span>
+                  </div>
+                </td>
+                <td>
+                  {% if q.published %}
+                    <span class="status-badge status-high">Published</span>
+                  {% else %}
+                    <span class="status-badge status-draft">Draft</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="table-actions-cell">
+                    <a href="{{ url_for('add_question', quiz_id=q.id) }}" class="button button-sm button-outline" title="Manage questions">
+                      ＋ Questions
+                    </a>
+                    <a href="{{ url_for('edit_quiz', quiz_id=q.id) }}" class="button button-sm button-ghost" title="Edit quiz settings">
+                      ✏️ Edit
+                    </a>
+                    <form class="inline-form" method="post" action="{{ url_for('toggle_publish', quiz_id=q.id) }}">
+                      <button type="submit" class="button button-sm button-ghost">
+                        {% if q.published %}Unpublish{% else %}Publish{% endif %}
+                      </button>
+                    </form>
+                    <form class="inline-form" method="post" action="{{ url_for('delete_quiz', quiz_id=q.id) }}" onsubmit="return confirm('Are you sure you want to delete this quiz and all its questions and student results?');">
+                      <button type="submit" class="button button-sm button-ghost-danger" title="Delete quiz">
+                        🗑
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6" class="empty-cell">
+                  <div class="empty-state">
+                    <p class="muted">No quizzes created yet. Click "Create New Quiz" to get started.</p>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Student Results Log with Search -->
+  <div class="admin-section" id="resultsSection">
+    <div class="section-subhead">
+      <div>
+        <h2>Student Performance Log</h2>
+        <p class="muted">Individual submissions, scores, and dates recorded in the database.</p>
+      </div>
+      <div class="search-wrap-mini">
+        <form method="get" action="{{ url_for('admin') }}" class="search-form-mini">
+          <input
+            type="text"
+            name="q"
+            class="form-input form-input-sm"
+            placeholder="Search student or quiz..."
+            value="{{ search_query|default('') }}"
+          >
+          <button type="submit" class="button button-sm">Filter</button>
+          {% if search_query %}
+            <a href="{{ url_for('admin') }}" class="button button-sm button-ghost">Reset</a>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Email</th>
+            <th>Quiz</th>
+            <th>Score</th>
+            <th>Percentage</th>
+            <th>Date &amp; Time</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+            {% set pct = ((r.score / r.total) * 100)|round(1) if r.total else 0 %}
+            <tr>
+              <td>
+                <strong>{{ r.student_name }}</strong>
+              </td>
+              <td class="muted">{{ r.email }}</td>
+              <td>{{ r.quiz_title }}</td>
+              <td>
+                <span class="score-pill">
+                  <strong>{{ r.score }}</strong> / {{ r.total }}
+                </span>
+              </td>
+              <td>
+                <span class="status-badge {% if pct >= 80 %}status-high{% elif pct >= 50 %}status-mid{% else %}status-low{% endif %}">
+                  {{ pct }}%
+                </span>
+              </td>
+              <td class="muted">{{ r.taken_at }}</td>
+              <td>
+                <a href="{{ url_for('review_attempt', attempt_id=r.id) }}" class="button button-sm button-outline">
+                  Review Answers
+                </a>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" class="empty-cell">
+                <div class="empty-state">
+                  <p class="muted">No student attempts recorded yet matching your query.</p>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if results_only|default(false) %}
+      <p style="margin-top: 18px;">
+        <a href="{{ url_for('admin') }}" class="button button-outline">← Back to Dashboard Overview</a>
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}My Results History — Quizzy Pro{% endblock %}
+
+{% block content %}
+<div class="history-page">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">YOUR JOURNEY & PROGRESS</div>
+      <h1>My Attempt History</h1>
+      <p class="muted">Track your test scores, view question explanations, and monitor improvements over time.</p>
+    </div>
+    <a href="{{ url_for('index') }}" class="button">Browse All Quizzes →</a>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Quiz Title</th>
+          <th>Category</th>
+          <th>Score</th>
+          <th>Percentage</th>
+          <th>Date &amp; Time</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in attempts %}
+          {% set pct = ((a.score / a.total) * 100)|round(1) if a.total else 0 %}
+          <tr>
+            <td>
+              <strong class="row-title">{{ a.title }}</strong>
+            </td>
+            <td>
+              <span class="category-tag">{{ a.category|default('General') }}</span>
+            </td>
+            <td>
+              <span class="score-pill">
+                <strong>{{ a.score }}</strong> / {{ a.total }}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge {% if pct >= 80 %}status-high{% elif pct >= 50 %}status-mid{% else %}status-low{% endif %}">
+                {{ pct }}%
+              </span>
+            </td>
+            <td class="muted">{{ a.taken_at }}</td>
+            <td>
+              <div class="table-actions-cell">
+                <a href="{{ url_for('review_attempt', attempt_id=a.id) }}" class="button button-sm button-outline">
+                  📖 Review Answers
+                </a>
+                <a href="{{ url_for('take_quiz', quiz_id=a.quiz_id) }}" class="button button-sm button-ghost">
+                  Retake ↻
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" class="empty-cell">
+              <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <h3>No attempts recorded yet</h3>
+                <p class="muted">You haven't completed any quizzes yet. Start one now to test your knowledge!</p>
+                <a href="{{ url_for('index') }}" class="button" style="margin-top: 14px;">Browse Available Quizzes</a>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
